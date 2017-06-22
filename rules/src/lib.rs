@@ -1,4 +1,4 @@
-//#[macro_use]
+extern crate unicode_normalization;
 extern crate rustling;
 extern crate rustling_ontology_moment as moment;
 extern crate rustling_ontology_values as values;
