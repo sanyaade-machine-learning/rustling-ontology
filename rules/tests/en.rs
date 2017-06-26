@@ -6,8 +6,9 @@ use values::Dimension;
 use values::check::*;
 
 use rustling::Check;
+use rules::PreprocessingOptions;
 
-fn run(rules: &rustling::RuleSet<Dimension>, sentence: &str) -> Vec<rustling::ParsedNode<Dimension>> {
+fn run(rules: &rustling::RuleSet<Dimension, PreprocessingOptions>, sentence: &str) -> Vec<rustling::ParsedNode<Dimension>> {
     rules.apply_all(&sentence.to_lowercase()).unwrap()
 }
 

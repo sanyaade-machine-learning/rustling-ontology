@@ -9,3 +9,4 @@ rustling = { git="http://github.com/snipsco/rustling", rev="0.5.0" }
 rustling-ontology-moment = { path="../moment"}
 rustling-ontology-values = { path="../values"}
 unicode-normalization = "0.1.5"
+unicode_categories = "0.1.1"

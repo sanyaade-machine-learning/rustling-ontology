@@ -30,9 +30,10 @@ macro_rules! lang {
         }
         #[cfg(test)]
         mod $lang_test {
+            use rustling_ontology_rules::PreprocessingOptions;
             use rustling::*;
             use super::*;
-            fn assert_examples(rules: &RuleSet<Dimension>, examples: Vec<Example<Dimension>>) {
+            fn assert_examples(rules: &RuleSet<Dimension, PreprocessingOptions>, examples: Vec<Example<Dimension>>) {
                 for ex in examples.iter() {
                     let stash = rules.apply_all(&ex.text.to_lowercase()).unwrap();
                     let correct_results = stash

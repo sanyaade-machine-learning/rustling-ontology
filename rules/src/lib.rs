@@ -1,4 +1,5 @@
 extern crate unicode_normalization;
+extern crate unicode_categories;
 extern crate rustling;
 extern crate rustling_ontology_moment as moment;
 extern crate rustling_ontology_values as values;
@@ -7,12 +8,15 @@ use std::result;
 
 #[macro_use]
 mod macros;
+mod preprocessing;
 
 pub mod de;
 pub mod en;
 pub mod es;
 pub mod fr;
 pub mod ko;
+
+pub use preprocessing::PreprocessingOptions;
 
 macro_rules! lang_enum {
     ([$($lang:ident),*]) => {
@@ -61,14 +65,18 @@ impl ::std::string::ToString for Lang {
 }
 
 macro_rules! lang {
-    ($lang:ident, $config:ident, $boundaries_checker:ident, [$($rule:ident),*], [$($dim:ident),*]) => {
+    ($lang:ident, $config:ident, $boundaries_checker:ident, [$($rule:ident),*], [$($dim:ident),*], [$($option:ident),*]) => {
         pub mod $config {
             use values;
             use $lang;
-            pub fn rule_set() -> ::rustling::RustlingResult<::rustling::RuleSet<values::Dimension>> {
+            use preprocessing;
+            
+            pub fn rule_set() -> ::rustling::RustlingResult<::rustling::RuleSet<values::Dimension, preprocessing::PreprocessingOptions>> {
                 let mut b = ::rustling::RuleSetBuilder::new(::rustling::BoundariesChecker::$boundaries_checker);
                 $( $lang::$rule(&mut b)?; )*
-                Ok(b.build())
+                let mut options = vec![];
+                $( options.push(preprocessing::PreprocessingOption::$option); )*
+                Ok(b.build_with(preprocessing::PreprocessingOptions::new(options)))
             }
 
             pub fn dims() -> Vec<values::DimensionKind> {
@@ -81,7 +89,7 @@ macro_rules! lang {
 }
 
 /// Obtain rules for a given language.
-pub fn rules(lang: Lang) -> ::rustling::RustlingResult<::rustling::RuleSet<values::Dimension>> {
+pub fn rules(lang: Lang) -> ::rustling::RustlingResult<::rustling::RuleSet<values::Dimension, ::preprocessing::PreprocessingOptions>> {
     match lang {
         Lang::DE => de_config::rule_set(),
         Lang::EN => en_config::rule_set(),
@@ -103,13 +111,17 @@ pub fn dims(lang: Lang) -> Vec<values::DimensionKind> {
 }
 
 lang!(de, de_config, ComposedWordOrDetailed, [rules_numbers, rules_time, rules_cycle, rules_duration, rules_temperature, rules_finance], 
-          [Number, Ordinal, Time, Duration, Temperature, AmountOfMoney]);
+          [Number, Ordinal, Time, Duration, Temperature, AmountOfMoney],
+          [RemoveDiacritics, Lowercase]);
 lang!(en, en_config, Detailed, [rules_numbers, rules_time, rules_cycle, rules_duration, rules_temperature, rules_finance], 
-          [Number, Ordinal, Time, Duration, Temperature, AmountOfMoney]);
+          [Number, Ordinal, Time, Duration, Temperature, AmountOfMoney],
+          [RemoveDiacritics, Lowercase]);
 lang!(es, es_config, Detailed, [rules_numbers, rules_temperature, rules_cycle, rules_duration, rules_time],
-          [Number, Ordinal, Time, Duration, Temperature]);
+          [Number, Ordinal, Time, Duration, Temperature],
+          [RemoveDiacritics, Lowercase]);
 lang!(fr, fr_config, Detailed, [rules_numbers, rules_time, rules_temperature, rules_cycle, rules_duration],
-          [Number, Ordinal, Time, Duration, Temperature]);
+          [Number, Ordinal, Time, Duration, Temperature],
+          [RemoveDiacritics, Lowercase]);
 lang!(ko, ko_config, Detailed, [rules_numbers, rule_time, rule_temperature, rules_finance, rules_cycle, rules_duration], 
-          [Number, Ordinal, Time, Duration, Temperature, AmountOfMoney]);
-
+          [Number, Ordinal, Time, Duration, Temperature, AmountOfMoney],
+          [RemoveDiacritics, Lowercase]);
