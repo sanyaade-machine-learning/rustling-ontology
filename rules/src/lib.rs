@@ -115,7 +115,7 @@ lang!(de, de_config, ComposedWordOrDetailed, [rules_numbers, rules_time, rules_c
           [RemoveDiacritics, Lowercase]);
 lang!(en, en_config, Detailed, [rules_numbers, rules_time, rules_cycle, rules_duration, rules_temperature, rules_finance], 
           [Number, Ordinal, Time, Duration, Temperature, AmountOfMoney],
-          [RemoveDiacritics, Lowercase]);
+          [Lowercase]);
 lang!(es, es_config, Detailed, [rules_numbers, rules_temperature, rules_cycle, rules_duration, rules_time],
           [Number, Ordinal, Time, Duration, Temperature],
           [RemoveDiacritics, Lowercase]);
