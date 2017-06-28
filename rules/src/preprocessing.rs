@@ -1,6 +1,6 @@
 use unicode_normalization::UnicodeNormalization;
 use unicode_categories::UnicodeCategories;
-use rustling::Preprocessor;
+use rustling::{Preprocessor, PreprocessedInput};
 
 #[derive(Clone, Debug)]
 pub struct PreprocessingOptions(Vec<PreprocessingOption>);
@@ -17,28 +17,33 @@ pub enum PreprocessingOption {
     Lowercase,
 }
 
-impl Preprocessor for PreprocessingOption {
-    fn run(&self, input: &str) -> String {
-        match self {
-            &PreprocessingOption::RemoveDiacritics => {
-                input.nfd()
-                    .filter(|c| !c.is_mark_nonspacing() ) // (Mn)
-                    .nfc()
-                    .collect()
-            },
-            &PreprocessingOption::Lowercase => {
-                input.to_lowercase()
-            },
-        }
+impl PreprocessingOption {
+    fn run(&self, input: &PreprocessedInput) -> PreprocessedInput {
+        unimplemented!();
+        // match self {
+        //     &PreprocessingOption::RemoveDiacritics => {
+        //         input.nfd()
+        //             .filter(|c| !c.is_mark_nonspacing() ) // (Mn)
+        //             .nfc()
+        //             .collect()
+        //     },
+        //     &PreprocessingOption::Lowercase => {
+        //         input.to_lowercase()
+        //     },
+        // }
     }
 }
 
+fn remove_diacritics(input: &PreprocessedInput) -> PreprocessedInput {
+    unimplemented!()
+}
+
+
 impl Preprocessor for PreprocessingOptions {
-    fn run(&self, input: &str) -> String {
+    fn run(&self, input: &str) -> PreprocessedInput {
         self.0.iter()
-            .fold(input.to_string(), |prev, next| {
-                println!("{:?}", prev);
-                next.run(prev.as_ref())
+            .fold(PreprocessedInput::no_preprocessing(input), |prev, next| {
+                next.run(&prev)
             })
     }
 }
@@ -48,9 +53,20 @@ mod tests {
     use super::*;
     use regex::Regex;
 
+    fn execute(regex: &Regex, sentence: &str) {
+        let matches = regex.captures_iter(&sentence)
+            .map(|cap| {
+                cap.get(0).unwrap();
+            })
+            .collect::<Vec<_>>();
+        println!("{:?}", matches);
+    }
+
     #[test]
     fn test_regex() {
         let regex = Regex::new(r#"0*(\d+) ?(ere?|eme|ieme)"#).unwrap();
+        execute(&regex, PreprocessingOption::RemoveDiacritics.run("3éme").as_ref());
+        execute(&regex, PreprocessingOption::RemoveDiacritics.run("3eme").as_ref());
         println!("{:?}", regex.find(PreprocessingOption::RemoveDiacritics.run("3éme").as_ref()));
         println!("{:?}", regex.find(PreprocessingOption::RemoveDiacritics.run("3eme").as_ref()));
     }
