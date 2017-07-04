@@ -1,6 +1,7 @@
 use unicode_normalization::UnicodeNormalization;
 use unicode_categories::UnicodeCategories;
 use rustling::{Preprocessor, PreprocessedInput};
+use std::collections::HashMap;
 
 #[derive(Clone, Debug)]
 pub struct PreprocessingOptions(Vec<PreprocessingOption>);
@@ -13,38 +14,100 @@ impl PreprocessingOptions {
 
 #[derive(Clone, Debug)]
 pub enum PreprocessingOption {
+    NormalizeWhitespace,
     RemoveDiacritics,
     Lowercase,
 }
 
 impl PreprocessingOption {
-    fn run(&self, input: &PreprocessedInput) -> PreprocessedInput {
-        input.clone()
-        //unimplemented!();
-        // match self {
-        //     &PreprocessingOption::RemoveDiacritics => {
-        //         input.nfd()
-        //             .filter(|c| !c.is_mark_nonspacing() ) // (Mn)
-        //             .nfc()
-        //             .collect()
-        //     },
-        //     &PreprocessingOption::Lowercase => {
-        //         input.to_lowercase()
-        //     },
-        // }
+    fn run(&self, input: PreprocessedInput) -> PreprocessedInput {
+        match self {
+            &PreprocessingOption::NormalizeWhitespace => normalize_whitespace(input),
+            &PreprocessingOption::Lowercase => lowercase(input),
+            &PreprocessingOption::RemoveDiacritics => remove_diacritics(input),
+        }
     }
 }
 
-fn remove_diacritics(input: &PreprocessedInput) -> PreprocessedInput {
-    unimplemented!()
+fn lowercase(input: PreprocessedInput) -> PreprocessedInput {
+    let mut input_cursor = 0;
+    let mut output_cursor = 0;
+    let mut byte_mapping = HashMap::new();
+    let output = input.preprocessed_input
+        .chars()
+        .filter_map(|c| {
+            let output_c = c.to_string().to_lowercase().chars().next();
+            byte_mapping.insert(output_cursor, input.map_byte(input_cursor).unwrap());
+            input_cursor += c.len_utf8();
+            output_cursor += output_c.map(|c| c.len_utf8()).unwrap_or(0);
+            output_c
+        })
+        .collect::<String>();
+    byte_mapping.insert(output.len(), input.original_input.len());
+    PreprocessedInput {
+        original_input: input.original_input,
+        preprocessed_input: output,
+        byte_mapping: byte_mapping
+    }
 }
 
+fn normalize_whitespace(input: PreprocessedInput) -> PreprocessedInput {
+    let mut input_cursor = 0;
+    let mut output_cursor = 0;
+    let mut byte_mapping = HashMap::new();
+    let mut previous_space = false;
+    let output = input.preprocessed_input
+        .chars()
+        .filter_map(|c| {
+            byte_mapping.insert(output_cursor, input.map_byte(input_cursor).unwrap());
+            input_cursor += c.len_utf8();
+            if previous_space && c.is_whitespace() {
+                None
+            } else {
+                previous_space = c.is_whitespace();
+                output_cursor += c.len_utf8();
+                Some(c)
+            }
+        })
+        .collect::<String>();
+    byte_mapping.insert(output.len(), input.original_input.len());
+    PreprocessedInput {
+        original_input: input.original_input,
+        preprocessed_input: output,
+        byte_mapping: byte_mapping
+    }
+}
+
+fn remove_diacritics(input: PreprocessedInput) -> PreprocessedInput {
+    let mut input_cursor = 0;
+    let mut output_cursor = 0;
+    let mut byte_mapping = HashMap::new();
+    let output = input.preprocessed_input
+        .chars()
+        .filter_map(|c| {
+            let output_c = c.to_string()
+                .nfd()
+                .filter(|c| !c.is_mark_nonspacing())
+                .nfc().next();
+            byte_mapping.insert(output_cursor, input.map_byte(input_cursor).unwrap());
+            input_cursor += c.len_utf8();
+            output_cursor += output_c.map(|c| c.len_utf8()).unwrap_or(0);
+            output_c
+        })
+        .collect::<String>();
+    byte_mapping.insert(output.len(), input.original_input.len());
+    PreprocessedInput {
+        original_input: input.original_input,
+        preprocessed_input: output,
+        byte_mapping: byte_mapping
+    }
+}
 
 impl Preprocessor for PreprocessingOptions {
     fn run(&self, input: &str) -> PreprocessedInput {
         self.0.iter()
             .fold(PreprocessedInput::no_preprocessing(input), |prev, next| {
-                next.run(&prev)
+                next.run(prev)
             })
     }
 }
@@ -61,15 +124,6 @@ mod tests {
             })
             .collect::<Vec<_>>();
         println!("{:?}", matches);
-    }
-
-    #[test]
-    fn test_regex() {
-        let regex = Regex::new(r#"0*(\d+) ?(ere?|eme|ieme)"#).unwrap();
-        execute(&regex, PreprocessingOption::RemoveDiacritics.run("3éme").as_ref());
-        execute(&regex, PreprocessingOption::RemoveDiacritics.run("3eme").as_ref());
-        println!("{:?}", regex.find(PreprocessingOption::RemoveDiacritics.run("3éme").as_ref()));
-        println!("{:?}", regex.find(PreprocessingOption::RemoveDiacritics.run("3eme").as_ref()));
     }
 
     #[test]
