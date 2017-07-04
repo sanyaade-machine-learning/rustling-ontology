@@ -112,16 +112,16 @@ pub fn dims(lang: Lang) -> Vec<values::DimensionKind> {
 
 lang!(de, de_config, ComposedWordOrDetailed, [rules_numbers, rules_time, rules_cycle, rules_duration, rules_temperature, rules_finance], 
           [Number, Ordinal, Time, Duration, Temperature, AmountOfMoney],
-          [RemoveDiacritics, Lowercase]);
+          [NormalizeWhitespace, RemoveDiacritics, Lowercase]);
 lang!(en, en_config, Detailed, [rules_numbers, rules_time, rules_cycle, rules_duration, rules_temperature, rules_finance], 
           [Number, Ordinal, Time, Duration, Temperature, AmountOfMoney],
-          [Lowercase]);
+          [NormalizeWhitespace, Lowercase]);
 lang!(es, es_config, Detailed, [rules_numbers, rules_temperature, rules_cycle, rules_duration, rules_time],
           [Number, Ordinal, Time, Duration, Temperature],
-          [RemoveDiacritics, Lowercase]);
+          [NormalizeWhitespace, RemoveDiacritics, Lowercase]);
 lang!(fr, fr_config, Detailed, [rules_numbers, rules_time, rules_temperature, rules_cycle, rules_duration],
           [Number, Ordinal, Time, Duration, Temperature],
-          [RemoveDiacritics, Lowercase]);
+          [NormalizeWhitespace, RemoveDiacritics, Lowercase]);
 lang!(ko, ko_config, Detailed, [rules_numbers, rule_time, rule_temperature, rules_finance, rules_cycle, rules_duration], 
           [Number, Ordinal, Time, Duration, Temperature, AmountOfMoney],
-          [RemoveDiacritics, Lowercase]);
+          [NormalizeWhitespace, RemoveDiacritics, Lowercase]);
