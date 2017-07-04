@@ -21,7 +21,7 @@ pub use preprocessing::PreprocessingOptions;
 macro_rules! lang_enum {
     ([$($lang:ident),*]) => {
         /// Enumerates all language supported for the general purpose ontology.
-        #[derive(Copy,Clone,Debug)]
+        #[derive(Copy,Clone,Debug, PartialEq, Eq, Hash)]
         pub enum Lang {
             $( $lang, )*
         }
