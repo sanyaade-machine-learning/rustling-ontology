@@ -117,33 +117,23 @@ mod tests {
     use super::*;
     use regex::Regex;
 
-    fn execute(regex: &Regex, sentence: &str) {
-        let matches = regex.captures_iter(&sentence)
-            .map(|cap| {
-                cap.get(0).unwrap();
-            })
-            .collect::<Vec<_>>();
-        println!("{:?}", matches);
+    fn preprocess_input(option: PreprocessingOption, input: &str) -> String {
+        option.run(PreprocessedInput::no_preprocessing(input)).preprocessed_input
     }
 
     #[test]
     fn test_remove_diacritics() {
-        assert_eq!("abc", 
-            PreprocessingOption::RemoveDiacritics.run("abc"));
-        assert_eq!("abe", 
-            PreprocessingOption::RemoveDiacritics.run("abé"));
-        assert_eq!("오백칠십구",
-            PreprocessingOption::RemoveDiacritics.run("오백칠십구"));
-        assert_eq!("3eme",
-            PreprocessingOption::RemoveDiacritics.run("3éme"));
+        assert_eq!("abc", preprocess_input(PreprocessingOption::RemoveDiacritics, "abc"));
+        assert_eq!("abc", preprocess_input(PreprocessingOption::RemoveDiacritics, "abc"));
+        assert_eq!("abe", preprocess_input(PreprocessingOption::RemoveDiacritics, "abé"));
+        assert_eq!("오백칠십구", preprocess_input(PreprocessingOption::RemoveDiacritics, "오백칠십구"));
+        assert_eq!("3eme", preprocess_input(PreprocessingOption::RemoveDiacritics, "3éme"));
     }
 
     #[test]
     fn test_lowercase()  {
-        assert_eq!("abc", 
-            PreprocessingOption::Lowercase.run("aBc"));
-        assert_eq!("abc", 
-            PreprocessingOption::Lowercase.run("ABc"));
+        assert_eq!("abc", preprocess_input(PreprocessingOption::Lowercase, "aBc"));
+        assert_eq!("abc", preprocess_input(PreprocessingOption::Lowercase, "ABc"));
     }
 
     #[test]
@@ -151,6 +141,30 @@ mod tests {
         assert_eq!("abe", PreprocessingOptions::new(vec![
             PreprocessingOption::Lowercase,
             PreprocessingOption::RemoveDiacritics,
-            ]).run("aBé"));
+            ]).run("aBé").preprocessed_input);
+    }
+
+    #[test]
+    fn test_same_result_despite_option_order() {
+        let input = "fünf tausend ētė ₩ 유로 euro";
+        let a = PreprocessingOptions::new(vec![
+            PreprocessingOption::Lowercase,
+            PreprocessingOption::RemoveDiacritics,
+            PreprocessingOption::NormalizeWhitespace,
+        ]);
+        let b = PreprocessingOptions::new(vec![
+            PreprocessingOption::Lowercase,
+            PreprocessingOption::NormalizeWhitespace,
+            PreprocessingOption::RemoveDiacritics,
+        ]);
+        let c = PreprocessingOptions::new(vec![
+            PreprocessingOption::NormalizeWhitespace,
+            PreprocessingOption::Lowercase,
+            PreprocessingOption::RemoveDiacritics,
+        ]);
+
+        assert_eq!(a.run(input), b.run(input));
+        assert_eq!(a.run(input), c.run(input));
+        assert_eq!(c.run(input), b.run(input));
     }
 }
