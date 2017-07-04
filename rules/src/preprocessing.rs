@@ -19,7 +19,8 @@ pub enum PreprocessingOption {
 
 impl PreprocessingOption {
     fn run(&self, input: &PreprocessedInput) -> PreprocessedInput {
-        unimplemented!();
+        input.clone()
+        //unimplemented!();
         // match self {
         //     &PreprocessingOption::RemoveDiacritics => {
         //         input.nfd()
